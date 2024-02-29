@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Hello World</title>
+    <url>/2024/02/19/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
     <title>平方根倒数算法</title>
     <url>/2023/11/03/3D%E6%B8%B8%E6%88%8F%E7%94%BB%E9%9D%A2%E4%BC%98%E5%8C%96/</url>
     <content><![CDATA[<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 平方根倒数快速算法</span></span><br><span class="line"><span class="function"><span class="type">float</span> <span class="title">Q_rsqrt</span><span class="params">(<span class="type">float</span> number)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">	<span class="type">long</span> i;</span><br><span class="line">    <span class="type">float</span> x2, y;</span><br><span class="line">    <span class="type">const</span> <span class="type">float</span> threehalfs = <span class="number">1.5F</span>;</span><br><span class="line">    </span><br><span class="line">    x2 = number * <span class="number">0.5F</span>;</span><br><span class="line">    y = number;</span><br><span class="line">    i = *( <span class="type">long</span> *) &amp;y;	<span class="comment">// 把y强制转化为可以进行二进制运算的long类型</span></span><br><span class="line">    i = <span class="number">0x5f3759df</span> - (i &gt;&gt; <span class="number">1</span>);	<span class="comment">// 通过减法和右移，计算y平方根倒数的近似值i</span></span><br><span class="line">    y = *( <span class="type">float</span> *) &amp;i;	<span class="comment">// 把long类型i强制转化为浮点数</span></span><br><span class="line">    y = y * (threehalfs - (x2 * y * y));	<span class="comment">// 把初始值代入牛顿法，计算更精确的值</span></span><br><span class="line">    <span class="comment">// y = y * (threehalfs - (x2 * y * y));	// 如果千分之2的精度不够用，还可以继续迭代</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> y;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
@@ -47,24 +65,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Hello World</title>
-    <url>/2024/02/19/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
-  </entry>
-  <entry>
     <title>好词好句收集</title>
     <url>/2024/02/29/%E5%A5%BD%E8%AF%8D%E5%A5%BD%E5%8F%A5%E6%94%B6%E9%9B%86/</url>
     <content><![CDATA[<ul>
@@ -102,6 +102,8 @@
     <title>A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis</title>
     <url>/2024/02/23/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81/</url>
     <content><![CDATA[<p><a target="_blank" className="btn" href="./pdf/线性化潮流.pdf"> PDF完整阅读 </a></p>
+<div class="pdfobject-container" data-target="/pdf/线性化潮流.pdf" data-height="500px"></div>
+
 <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>为了减少用非线性潮流模型进行电力系统分析的计算量，提出了线性潮流模型。利用线性规划问题良好的计算性能，可以有效地求解具有线性潮流模型的OPF问题并保证收敛性。直流潮流模型作为线性潮流模型的代表，在电力系统运行中得到了广泛的应用，该模型关注P和θ，忽略Q和v。随着电力系统中电力需求和电子设备的增加，P和Q之间的耦合越来越强。在保持直流潮流模型线性化的基础上，提出了许多包含Q和v的方法。</p>
 <h1 id="现有的线性化方法"><a href="#现有的线性化方法" class="headerlink" title="现有的线性化方法"></a>现有的线性化方法</h1><ul>
 <li>DC潮流模型</li>
