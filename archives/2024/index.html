@@ -221,8 +221,8 @@
       </div>
 
       <div class="post-title">
-          <a class="post-title-link" href="/2024/02/29/%E5%A5%BD%E8%AF%8D%E5%A5%BD%E5%8F%A5%E6%94%B6%E9%9B%86/" itemprop="url">
-            <span itemprop="name">好词好句收集</span>
+          <a class="post-title-link" href="/2024/02/29/%E9%B8%A1%E6%B1%A4/" itemprop="url">
+            <span itemprop="name">毒鸡汤</span>
           </a>
       </div>
 
@@ -241,8 +241,8 @@
       </div>
 
       <div class="post-title">
-          <a class="post-title-link" href="/2024/02/29/%E9%B8%A1%E6%B1%A4/" itemprop="url">
-            <span itemprop="name">毒鸡汤</span>
+          <a class="post-title-link" href="/2024/02/29/%E5%A5%BD%E8%AF%8D%E5%A5%BD%E5%8F%A5%E6%94%B6%E9%9B%86/" itemprop="url">
+            <span itemprop="name">好词好句收集</span>
           </a>
       </div>
 
@@ -539,6 +539,26 @@ $(document).ready(function() {
 
 
 
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
 
 
 

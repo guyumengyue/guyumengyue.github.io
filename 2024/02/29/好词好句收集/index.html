@@ -459,10 +459,13 @@ mjx-container[display="true"] + br {
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2024/02/29/%E9%B8%A1%E6%B1%A4/" rel="prev" title="毒鸡汤">
-      <i class="fa fa-chevron-left"></i> 毒鸡汤
+    <a href="/2024/02/23/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81/" rel="prev" title="A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis">
+      <i class="fa fa-chevron-left"></i> A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2024/02/29/%E9%B8%A1%E6%B1%A4/" rel="next" title="毒鸡汤">
+      毒鸡汤 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -717,6 +720,26 @@ $(document).ready(function() {
 
 
 
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
 
 
 
