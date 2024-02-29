@@ -101,7 +101,7 @@
   <entry>
     <title>A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis</title>
     <url>/2024/02/23/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81/</url>
-    <content><![CDATA[<p><a target="_blank" className="btn" href="./线性化潮流.pdf"> PDF完整阅读 </a></p>
+    <content><![CDATA[<p><a target="_blank" className="btn" href="./pdf/线性化潮流.pdf"> PDF完整阅读 </a></p>
 <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>为了减少用非线性潮流模型进行电力系统分析的计算量，提出了线性潮流模型。利用线性规划问题良好的计算性能，可以有效地求解具有线性潮流模型的OPF问题并保证收敛性。直流潮流模型作为线性潮流模型的代表，在电力系统运行中得到了广泛的应用，该模型关注P和θ，忽略Q和v。随着电力系统中电力需求和电子设备的增加，P和Q之间的耦合越来越强。在保持直流潮流模型线性化的基础上，提出了许多包含Q和v的方法。</p>
 <h1 id="现有的线性化方法"><a href="#现有的线性化方法" class="headerlink" title="现有的线性化方法"></a>现有的线性化方法</h1><ul>
 <li>DC潮流模型</li>
