@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ranranlonglong.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="主函数需提前安装MATPOWER、GUROBI、JSONLAB(matlab读取json文件的插件) 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解耦线性化最优潮流的安全约束机组组合样本生成">
+<meta property="og:url" content="http://ranranlonglong.cn/2024/04/08/%E6%AF%95%E4%B8%9A%E8%AE%BA%E6%96%87/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81%E5%AE%89%E5%85%A8%E7%BA%A6%E6%9D%9F%E6%9C%BA%E7%BB%84%E7%BB%84%E5%90%88%E6%A0%B7%E6%9C%AC%E7%94%9F%E6%88%90/index.html">
+<meta property="og:site_name" content="小黑屋">
+<meta property="og:description" content="主函数需提前安装MATPOWER、GUROBI、JSONLAB(matlab读取json文件的插件) 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-04-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-07T20:21:01.841Z">
+<meta property="article:author" content="wzl">
+<meta property="article:tag" content="Linear">
+<meta property="article:tag" content="SCUC">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ranranlonglong.cn/2024/04/08/%E6%AF%95%E4%B8%9A%E8%AE%BA%E6%96%87/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81%E5%AE%89%E5%85%A8%E7%BA%A6%E6%9D%9F%E6%9C%BA%E7%BB%84%E7%BB%84%E5%90%88%E6%A0%B7%E6%9C%AC%E7%94%9F%E6%88%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>解耦线性化最优潮流的安全约束机组组合样本生成 | 小黑屋</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style><link rel="alternate" href="/rss2.xml" title="小黑屋" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+      <a target="_blank" rel="noopener" href="https://github.com/guyumengyue" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#FD6C6C; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">小黑屋</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://ranranlonglong.cn/2024/04/08/%E6%AF%95%E4%B8%9A%E8%AE%BA%E6%96%87/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81%E5%AE%89%E5%85%A8%E7%BA%A6%E6%9D%9F%E6%9C%BA%E7%BB%84%E7%BB%84%E5%90%88%E6%A0%B7%E6%9C%AC%E7%94%9F%E6%88%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="wzl">
+      <meta itemprop="description" content="人生于天地之间，无终始者，非君子也。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="小黑屋">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          解耦线性化最优潮流的安全约束机组组合样本生成
+        </h1>
+
+        <div class="post-meta">
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-08 00:00:00 / 修改时间：04:21:01" itemprop="dateCreated datePublished" datetime="2024-04-08T00:00:00+08:00">2024-04-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%AF%95%E4%B8%9A%E8%AE%BA%E6%96%87/" itemprop="url" rel="index"><span itemprop="name">毕业论文</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>20k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>18 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="主函数"><a href="#主函数" class="headerlink" title="主函数"></a>主函数</h1><p><strong>需提前安装MATPOWER、GUROBI、JSONLAB(matlab读取json文件的插件)</strong></p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">% main.m</span></span><br><span class="line">clear all;</span><br><span class="line">[PQ, PV, REF, NONE, BUS_I, BUS_TYPE, PD, QD, GS, BS, BUS_AREA, VM, ...</span><br><span class="line">    VA, BASE_KV, ZONE, VMAX, VMIN, LAM_P, LAM_Q, MU_VMAX, MU_VMIN] = idx_bus;</span><br><span class="line">[F_BUS, T_BUS, BR_R, BR_X, BR_B, RATE_A, RATE_B, RATE_C, ...</span><br><span class="line">    TAP, SHIFT, BR_STATUS, PF, QF, PT, QT, MU_SF, MU_ST, ...</span><br><span class="line">    ANGMIN, ANGMAX, MU_ANGMIN, MU_ANGMAX] = idx_brch;</span><br><span class="line">[GEN_BUS, PG, QG, QMAX, QMIN, VG, MBASE, GEN_STATUS, PMAX, PMIN, ...</span><br><span class="line">    MU_PMAX, MU_PMIN, MU_QMAX, MU_QMIN, PC1, PC2, QC1MIN, QC1MAX, ...</span><br><span class="line">    QC2MIN, QC2MAX, RAMP_AGC, RAMP_10, RAMP_30, RAMP_Q, APF] = idx_gen;</span><br><span class="line">[F_BUS, T_BUS, BR_R, BR_X, BR_B, RATE_A, RATE_B, RATE_C, ...</span><br><span class="line">    TAP, SHIFT, BR_STATUS, PF, QF, PT, QT, MU_SF, MU_ST, ...</span><br><span class="line">    ANGMIN, ANGMAX, MU_ANGMIN, MU_ANGMAX] = idx_brch;</span><br><span class="line">[PW_LINEAR, POLYNOMIAL, MODEL, STARTUP, SHUTDOWN, NCOST, COST] = idx_cost;</span><br><span class="line"></span><br><span class="line"><span class="comment">%% 读取数据</span></span><br><span class="line"><span class="comment">% 机组数据</span></span><br><span class="line">filename = gunzip(<span class="string">"../data/matpower/case118/2017-01-01.json.gz"</span>, <span class="string">"../data/matpower/case118/"</span>);</span><br><span class="line">unitdata = loadjson(<span class="string">"../data/matpower/case118/2017-01-01.json"</span>);</span><br><span class="line">T = unitdata.Parameters.Time_0x20_horizon_0x20__0x28_h_0x29_;</span><br><span class="line"><span class="comment">% OPF数据</span></span><br><span class="line">opfdata = loadcase(case118);</span><br><span class="line">baseMVA = opfdata.baseMVA;</span><br><span class="line">bus = opfdata.bus;</span><br><span class="line">gen = opfdata.gen;</span><br><span class="line">branch = opfdata.branch;</span><br><span class="line">branch(:, RATE_A) = <span class="number">1e6</span>;</span><br><span class="line">gencost = opfdata.gencost;</span><br><span class="line"><span class="comment">% 序号处理</span></span><br><span class="line">i2e	= bus(:, BUS_I);</span><br><span class="line">e2i = <span class="built_in">zeros</span>(<span class="built_in">max</span>(i2e), <span class="number">1</span>);</span><br><span class="line">e2i(i2e) = [<span class="number">1</span>:<span class="built_in">size</span>(bus, <span class="number">1</span>)]';</span><br><span class="line">bus(:, BUS_I)	= e2i( bus(:, BUS_I)	);</span><br><span class="line">gen(:, GEN_BUS)	= e2i( gen(:, GEN_BUS)	);</span><br><span class="line">genbus = gen(:, GEN_BUS);</span><br><span class="line">branch(:, F_BUS)= e2i( branch(:, F_BUS)	);</span><br><span class="line">branch(:, T_BUS)= e2i( branch(:, T_BUS)	);</span><br><span class="line"><span class="comment">% 长度</span></span><br><span class="line">ngen = <span class="built_in">size</span>(gen, <span class="number">1</span>);</span><br><span class="line">nbus = <span class="built_in">size</span>(bus, <span class="number">1</span>);</span><br><span class="line">nbranch = <span class="built_in">size</span>(branch, <span class="number">1</span>);</span><br><span class="line"><span class="comment">% 平衡节点</span></span><br><span class="line">slack = bus(bus(:, BUS_TYPE) == REF, BUS_I);</span><br><span class="line"><span class="comment">% 节点导纳矩阵</span></span><br><span class="line">[Ybus, Ybus1,~, ~] = makeYbus1(baseMVA, bus, branch); </span><br><span class="line">G = <span class="built_in">real</span>(Ybus);</span><br><span class="line">B = <span class="built_in">imag</span>(Ybus);</span><br><span class="line">B1 = <span class="built_in">imag</span>(Ybus1);</span><br><span class="line"></span><br><span class="line">BaseLoadP = opfdata.bus(:, PD);</span><br><span class="line">NL = nnz(opfdata.bus(:, PD));</span><br><span class="line">LoadBuses = <span class="built_in">find</span>(BaseLoadP~=<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">% 样本生成参数</span></span><br><span class="line">NSamples = <span class="number">1000</span>;</span><br><span class="line">LoadFactor = unifrnd(<span class="number">0.9</span>, <span class="number">1.1</span>, [NL*T, NSamples]);</span><br><span class="line"><span class="comment">% CorrCoeff  = 0.5;</span></span><br><span class="line"><span class="comment">% MaxChangeLoad = 0.7;</span></span><br><span class="line"><span class="comment">% ScaleSigma = MaxChangeLoad/1.645;   %1.645 is the 95th percentile of a normal Gaussian with 1 std</span></span><br><span class="line"><span class="comment">% mu    = ones(NL*T, 1);</span></span><br><span class="line"><span class="comment">% sigma = ScaleSigma^2 * (CorrCoeff*ones(NL*T) + (1-CorrCoeff)*eye(NL*T));</span></span><br><span class="line"><span class="comment">% LoadFactor = mvnrnd_trn((1-MaxChangeLoad)*ones(NL*T,1)', ...</span></span><br><span class="line"><span class="comment">%             (1+MaxChangeLoad)*ones(NL*T,1)', mu', sigma, NSamples)';</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> t = <span class="number">1</span>:NSamples</span><br><span class="line">    <span class="built_in">disp</span>(t);</span><br><span class="line">    <span class="built_in">factor</span> = LoadFactor(:, t);</span><br><span class="line">    <span class="built_in">factor</span> = <span class="built_in">reshape</span>(<span class="built_in">factor</span>, [], T);</span><br><span class="line">    factor1 = <span class="built_in">zeros</span>(nbus, T);</span><br><span class="line">    factor1(LoadBuses, :) = <span class="built_in">factor</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">% solve scuc</span></span><br><span class="line">    my_result = runSCUC(unitdata, opfdata, factor1, baseMVA, bus, gen, branch, gencost, ngen, nbus, nbranch, slack, Ybus, G, B, B1, T);</span><br><span class="line">    <span class="keyword">if</span> my_result.result.problem == <span class="number">0</span></span><br><span class="line">        Pd(:, :, t) = my_result.Pd;</span><br><span class="line">        Qd(:, :, t) = my_result.Qd;</span><br><span class="line">        Pg(:, :, t) = my_result.Pg;</span><br><span class="line">        Qr(:, :, t) = my_result.Qr;</span><br><span class="line">        Vm(:, :, t) = my_result.Vm;</span><br><span class="line">        Va(:, :, t) = my_result.Va;</span><br><span class="line">        u(:, :, t) = my_result.u;</span><br><span class="line">        obj(:, t) = my_result.obj;</span><br><span class="line">        runtime(:, t) = my_result.result.solvertime;</span><br><span class="line">        Vol(:, :, t) = my_result.Vm .* <span class="built_in">exp</span>(my_result.Va * <span class="number">1</span><span class="built_in">j</span>);</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">rem</span>(t, <span class="number">100</span>) == <span class="number">0</span>)</span><br><span class="line">        <span class="comment">% Save Data</span></span><br><span class="line">        save(<span class="string">'SCUC_Case118.mat'</span>, <span class="string">'Pd'</span>, <span class="string">'Qd'</span>, <span class="string">'Pg'</span>, <span class="string">'Qr'</span>, <span class="string">'Vm'</span>, <span class="string">'Va'</span>, <span class="string">'u'</span>, <span class="string">'Ybus'</span>, <span class="string">'Ybus1'</span>, <span class="string">'genbus'</span>, <span class="string">'nbus'</span>, <span class="string">'T'</span>,...</span><br><span class="line">             <span class="string">'obj'</span>, <span class="string">'runtime'</span>, <span class="string">'Vol'</span>);</span><br><span class="line">        fprintf(<span class="string">'Done with %d iterations \n'</span>, t);</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="求解SCUC"><a href="#求解SCUC" class="headerlink" title="求解SCUC"></a>求解SCUC</h1><figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">% runSCUC.m</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">data</span> = <span class="title">runSCUC</span><span class="params">(unitdata, opfdata, factor1, baseMVA, bus, gen, branch, gencost, ngen, nbus, nbranch, slack, Ybus, G, B, B1, T)</span></span></span><br><span class="line">warning off;</span><br><span class="line">[PQ, PV, REF, NONE, BUS_I, BUS_TYPE, PD, QD, GS, BS, BUS_AREA, VM, ...</span><br><span class="line">    VA, BASE_KV, ZONE, VMAX, VMIN, LAM_P, LAM_Q, MU_VMAX, MU_VMIN] = idx_bus;</span><br><span class="line">[F_BUS, T_BUS, BR_R, BR_X, BR_B, RATE_A, RATE_B, RATE_C, ...</span><br><span class="line">    TAP, SHIFT, BR_STATUS, PF, QF, PT, QT, MU_SF, MU_ST, ...</span><br><span class="line">    ANGMIN, ANGMAX, MU_ANGMIN, MU_ANGMAX] = idx_brch;</span><br><span class="line">[GEN_BUS, PG, QG, QMAX, QMIN, VG, MBASE, GEN_STATUS, PMAX, PMIN, ...</span><br><span class="line">    MU_PMAX, MU_PMIN, MU_QMAX, MU_QMIN, PC1, PC2, QC1MIN, QC1MAX, ...</span><br><span class="line">    QC2MIN, QC2MAX, RAMP_AGC, RAMP_10, RAMP_30, RAMP_Q, APF] = idx_gen;</span><br><span class="line">[F_BUS, T_BUS, BR_R, BR_X, BR_B, RATE_A, RATE_B, RATE_C, ...</span><br><span class="line">    TAP, SHIFT, BR_STATUS, PF, QF, PT, QT, MU_SF, MU_ST, ...</span><br><span class="line">    ANGMIN, ANGMAX, MU_ANGMIN, MU_ANGMAX] = idx_brch;</span><br><span class="line">[PW_LINEAR, POLYNOMIAL, MODEL, STARTUP, SHUTDOWN, NCOST, COST] = idx_cost;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">branchf = branch(:, F_BUS);</span><br><span class="line">brancht = branch(:, T_BUS);</span><br><span class="line"><span class="comment">% gen(:, PMIN) = 10;</span></span><br><span class="line">indexgen = fieldnames(unitdata.Generators);</span><br><span class="line">strPgmin = <span class="string">'Production_0x20_cost_0x20_curve_0x20__0x28_MW_0x29_'</span>;</span><br><span class="line"><span class="keyword">for</span> g = <span class="number">1</span>:ngen</span><br><span class="line">      Pgmin = getfield(unitdata.Generators, indexgen{g}, strPgmin);</span><br><span class="line">      gen(g, PMIN) = Pgmin(<span class="number">1</span>);</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% 创建变量</span></span><br><span class="line">u = binvar(ngen, T);</span><br><span class="line">Pg = sdpvar(ngen, T);</span><br><span class="line">Qr = sdpvar(ngen, T);</span><br><span class="line"></span><br><span class="line">V = sdpvar(nbus, T);</span><br><span class="line">assign(V, <span class="number">1</span>);</span><br><span class="line">theta = sdpvar(nbus, T);</span><br><span class="line">assign(theta, <span class="number">0</span>);</span><br><span class="line">Pij = sdpvar(nbranch, T);</span><br><span class="line"></span><br><span class="line"><span class="comment">%% 创建约束</span></span><br><span class="line">constraints = [];</span><br><span class="line"></span><br><span class="line"><span class="comment">% 有功无功出力约束</span></span><br><span class="line"><span class="comment">% indexgen = fieldnames(unitdata.Generators);</span></span><br><span class="line"><span class="comment">% strPgmin = 'Production_0x20_cost_0x20_curve_0x20__0x28_MW_0x29_';</span></span><br><span class="line"><span class="keyword">for</span> g = <span class="number">1</span>:ngen</span><br><span class="line"><span class="comment">%       Pgmin = getfield(unitdata.Generators, indexgen{g}, strPgmin);</span></span><br><span class="line">      constraints = [constraints, </span><br><span class="line">          (u(g, :) .*  gen(g, PMIN) / baseMVA &lt;= Pg(g, :)),</span><br><span class="line">          (Pg(g, :) &lt;= u(g, :) .* gen(g, PMAX) / baseMVA), </span><br><span class="line">          (u(g, :) .* gen(g, QMIN) / baseMVA &lt;= Qr(g, :)),</span><br><span class="line">          (Qr(g, :) &lt;= u(g, :) .* gen(g, QMAX) / baseMVA),</span><br><span class="line">      ];</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">% 爬坡约束</span></span><br><span class="line">strRU = <span class="string">"Ramp_0x20_up_0x20_limit_0x20__0x28_MW_0x29_"</span>;</span><br><span class="line">strRD = <span class="string">"Ramp_0x20_down_0x20_limit_0x20__0x28_MW_0x29_"</span>;</span><br><span class="line">strinitS = <span class="string">"Initial_0x20_status_0x20__0x28_h_0x29_"</span>;</span><br><span class="line">strinitP = <span class="string">"Initial_0x20_power_0x20__0x28_MW_0x29_"</span>;</span><br><span class="line"><span class="keyword">for</span> g = <span class="number">1</span>:ngen</span><br><span class="line">    <span class="keyword">for</span> t = <span class="number">1</span>:T</span><br><span class="line">        RU = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strRU) / baseMVA;</span><br><span class="line">        RD = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strRD) / baseMVA;</span><br><span class="line">        SU = gen(g, PMIN) / baseMVA;</span><br><span class="line">        SD = gen(g, PMIN) / baseMVA;</span><br><span class="line">        Pmax = gen(g, PMAX) / baseMVA;</span><br><span class="line">        <span class="keyword">if</span> t &gt; <span class="number">1</span></span><br><span class="line">            constraints = [constraints,</span><br><span class="line">                Pg(g, t) - Pg(g, t - <span class="number">1</span>) &lt;= RU * u(g, t - <span class="number">1</span>) + SU * (u(g, t) - u(g, t - <span class="number">1</span>)) + Pmax * (<span class="number">1</span> - u(g, t)),</span><br><span class="line">                Pg(g, t - <span class="number">1</span>) - Pg(g, t) &lt;= RD * u(g, t) + SD * (u(g, t - <span class="number">1</span>) - u(g, t)) + Pmax * (<span class="number">1</span> - u(g, t - <span class="number">1</span>)),</span><br><span class="line">            ];</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            initP = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitP) / baseMVA;</span><br><span class="line"><span class="comment">%             initu = min(1, getfield(unitdata.Generators, ['g', num2str(g)], strinitP));</span></span><br><span class="line">            initS = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitS);</span><br><span class="line">            initu = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitS) &gt; <span class="number">0</span>;</span><br><span class="line">            constraints = [constraints,</span><br><span class="line">                Pg(g, t) - initP &lt;= RU * initu + SU * (u(g, t) - initu) + Pmax * (<span class="number">1</span> - u(g, t)),</span><br><span class="line">                initP - Pg(g, t) &lt;= RD * u(g, t) + SD * (initu - u(g, t)) + Pmax * (<span class="number">1</span> - initu),</span><br><span class="line">            ];</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">% 最小启停时间约束</span></span><br><span class="line">strUT = <span class="string">"Minimum_0x20_uptime_0x20__0x28_h_0x29_"</span>;</span><br><span class="line">strDT = <span class="string">"Minimum_0x20_downtime_0x20__0x28_h_0x29_"</span>;</span><br><span class="line"><span class="keyword">for</span> g = <span class="number">1</span>:ngen</span><br><span class="line">    <span class="keyword">for</span> t = <span class="number">1</span>:T</span><br><span class="line">        UT = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strUT);</span><br><span class="line">        DT = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strDT);</span><br><span class="line">        minUT = <span class="built_in">min</span>(t + UT - <span class="number">1</span>, T);</span><br><span class="line">        minDT = <span class="built_in">min</span>(t + DT - <span class="number">1</span>, T);</span><br><span class="line">        <span class="keyword">if</span> t &gt; <span class="number">1</span></span><br><span class="line">            constraints = [constraints,</span><br><span class="line">                sum(u(g, t:minUT)) &gt;= (u(g, t) - u(g, t - <span class="number">1</span>)) * <span class="built_in">min</span>(UT, T - t + <span class="number">1</span>),</span><br><span class="line">                sum(<span class="built_in">ones</span>(<span class="number">1</span>, minDT - t + <span class="number">1</span>) - u(g, t:minDT)) &gt;= (u(g, t - <span class="number">1</span>) - u(g, t)) * <span class="built_in">min</span>(DT, T - t + <span class="number">1</span>),</span><br><span class="line">            ];</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            initS = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitS);</span><br><span class="line">            initP = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitP) / baseMVA;</span><br><span class="line"><span class="comment">%             initu = min(1, getfield(unitdata.Generators, ['g', num2str(g)], strinitP));</span></span><br><span class="line">            initu = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitS) &gt; <span class="number">0</span>;</span><br><span class="line">            constraints = [constraints,</span><br><span class="line">                sum(u(g, t:minUT)) &gt;= (u(g, t) - initu) * <span class="built_in">min</span>(UT, T - t + <span class="number">1</span>) + u(g, t) * initu * <span class="built_in">max</span>(<span class="number">0</span>, UT - initS),</span><br><span class="line">                sum(<span class="built_in">ones</span>(<span class="number">1</span>, minDT - t + <span class="number">1</span>) - u(g, t:minDT)) &gt;= (initu - u(g, t)) * <span class="built_in">min</span>(DT, T - t + <span class="number">1</span>) + (<span class="number">1</span> - u(g, t)) * (<span class="number">1</span> - initu) * <span class="built_in">max</span>(<span class="number">0</span>, DT + initS),</span><br><span class="line">            ];</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">% 电压幅值约束</span></span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:nbus</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">ismember</span>(<span class="built_in">i</span>, slack)</span><br><span class="line">        constraints = [constraints, V(<span class="built_in">i</span>, :) == <span class="number">1.0</span>; theta(<span class="built_in">i</span>, :) == <span class="number">0.0</span>;];</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        constraints = [constraints,</span><br><span class="line">            bus(<span class="built_in">i</span>, VMIN) &lt;= V(<span class="built_in">i</span>, :),</span><br><span class="line">            V(<span class="built_in">i</span>, :) &lt;= bus(<span class="built_in">i</span>, VMAX),</span><br><span class="line"><span class="comment">%             -pi &lt;= theta(i, t) &lt;= pi;</span></span><br><span class="line">        ];</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">% 旋转备用约束</span></span><br><span class="line">reses = unitdata.Reserves.r1.Amount_0x20__0x28_MW_0x29_;</span><br><span class="line"><span class="keyword">for</span> t = <span class="number">1</span>:T</span><br><span class="line">      constraints = [constraints, u(:, t)'* (gen(:, PMAX) / baseMVA - Pg(:, t)) &gt;= reses(t) / baseMVA];</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">% 线路潮流约束</span></span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:nbranch</span><br><span class="line">    f = branchf(<span class="built_in">i</span>);</span><br><span class="line">    t = brancht(<span class="built_in">i</span>);</span><br><span class="line">    constraints = [constraints, </span><br><span class="line">        <span class="comment">% 2017年，参考文献：A State-Independent Linear Power Flow Model With Accurate Estimation of Voltage Magnitude</span></span><br><span class="line">        Pij(<span class="built_in">i</span>, :) == G(f, t) * (V(f, :) - V(t, :)) - B(f, t) * (theta(f, :) - theta(t, :)),</span><br><span class="line">        <span class="comment">% 2019年，参考文献：A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis</span></span><br><span class="line"><span class="comment">%         Pij(i, :) == G(f, t) * (V(f, :) .* V(f, :) - V(t, :) .* V(t, :)) * 0.5 - B(f, t) * (theta(f, :) - theta(t, :)),</span></span><br><span class="line">    ];</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="keyword">for</span> t = <span class="number">1</span>:T</span><br><span class="line">    constraints = [constraints, </span><br><span class="line">        (-branch(:, RATE_A) / baseMVA &lt;= Pij(:, t)),</span><br><span class="line">        (Pij(:, t) &lt;= branch(:, RATE_A) / baseMVA),</span><br><span class="line">    ];</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% 交流潮流约束</span></span><br><span class="line"><span class="built_in">factor</span> = bus(:, QD) ./ bus(:, PD);</span><br><span class="line"><span class="built_in">factor</span>(<span class="built_in">isnan</span>(<span class="built_in">factor</span>)) = <span class="number">0</span>;</span><br><span class="line"><span class="built_in">factor</span>(<span class="built_in">isinf</span>(<span class="built_in">factor</span>)) = <span class="number">0</span>;</span><br><span class="line">strLoad = <span class="string">"Load_0x20__0x28_MW_0x29_"</span>;</span><br><span class="line">genbus = gen(:, GEN_BUS);</span><br><span class="line">Pd_saved = <span class="built_in">zeros</span>(nbus, T);</span><br><span class="line">Qd_saved = <span class="built_in">zeros</span>(nbus, T);</span><br><span class="line">indexbus = fieldnames(unitdata.Buses);</span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>:nbus</span><br><span class="line">    Pd = getfield(unitdata.Buses, indexbus{<span class="built_in">i</span>}, strLoad) .* factor1(<span class="built_in">i</span>, :) / baseMVA;</span><br><span class="line"><span class="comment">%     if Pd == 0.0</span></span><br><span class="line"><span class="comment">%         Pd = Pd * ones(T, 1);</span></span><br><span class="line"><span class="comment">%     end</span></span><br><span class="line">    Qd = <span class="built_in">factor</span>(<span class="built_in">i</span>) .* Pd;</span><br><span class="line">    Pd_saved(<span class="built_in">i</span>, :) = Pd;</span><br><span class="line">    Qd_saved(<span class="built_in">i</span>, :) = Qd;</span><br><span class="line">    <span class="keyword">for</span> t = <span class="number">1</span>:T</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">ismember</span>(<span class="built_in">i</span>, genbus)</span><br><span class="line">            g = <span class="built_in">find</span>(gen(:, GEN_BUS) == <span class="built_in">i</span>);</span><br><span class="line">            constraints = [constraints, </span><br><span class="line">                <span class="comment">% 2017年，参考文献：A State-Independent Linear Power Flow Model With Accurate Estimation of Voltage Magnitude</span></span><br><span class="line">                Pg(g, t) == Pd(t) + G(<span class="built_in">i</span>, :) * V(:, t) - B1(<span class="built_in">i</span>, :) * theta(:, t),</span><br><span class="line">                Qr(g, t) == Qd(t) - G(<span class="built_in">i</span>, :) * theta(:, t) - B(<span class="built_in">i</span>, :) * V(:, t),</span><br><span class="line">                <span class="comment">% 2019年，参考文献：A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis</span></span><br><span class="line"><span class="comment">%                 Pg(g, t) == Pd(t) + G(i, :) * (V(i, t) * V(i, t) + V(:, t) .* V(:, t)) * 0.5 + B(i, :) * (theta(i, t) - theta(:, t)),</span></span><br><span class="line"><span class="comment">%                 Qr(g, t) == Pd(t) - G(i, :) * (theta(i, t) - theta(:, t)) - B(i, :) * (V(i, t) * V(i, t) + V(:, t) .* V(:, t)) * 0.5,</span></span><br><span class="line">            ];</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            constraints = [constraints, </span><br><span class="line">                <span class="comment">% 2017年，参考文献：A State-Independent Linear Power Flow Model With Accurate Estimation of Voltage Magnitude</span></span><br><span class="line">                <span class="number">0</span> == Pd(t) + G(<span class="built_in">i</span>, :) * V(:, t) - B1(<span class="built_in">i</span>, :) * theta(:, t),</span><br><span class="line">                <span class="number">0</span> == Qd(t) - G(<span class="built_in">i</span>, :) * theta(:, t) - B(<span class="built_in">i</span>, :) * V(:, t),</span><br><span class="line">                <span class="comment">% 2019年，参考文献：A General Formulation of Linear Power Flow Models: Basic Theory and Error Analysis</span></span><br><span class="line"><span class="comment">%                 0 == Pd(t) + G(i, :) * (V(i, t) * V(i, t) + V(:, t) .* V(:, t)) * 0.5 + B(i, :) * (theta(i, t) - theta(:, t)),</span></span><br><span class="line"><span class="comment">%                 0 == Pd(t) - G(i, :) * (theta(i, t) - theta(:, t)) - B(i, :) * (V(i, t) * V(i, t) + V(:, t) .* V(:, t)) * 0.5,</span></span><br><span class="line">            ];</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% 目标函数</span></span><br><span class="line">obj = <span class="number">0</span>;</span><br><span class="line">strSUC = <span class="string">"Startup_0x20_costs_0x20__0x28__0x24__0x29_"</span>;</span><br><span class="line"><span class="keyword">for</span> g = <span class="number">1</span>:ngen</span><br><span class="line">    suc = getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strSUC);</span><br><span class="line">    <span class="keyword">for</span> t = <span class="number">1</span>:T</span><br><span class="line">        <span class="keyword">if</span> t &gt; <span class="number">1</span>    <span class="comment">% gencost(g, COST) * (Pg(g, t) * baseMVA).^2 + </span></span><br><span class="line">            obj = obj + (gencost(g, COST) * (Pg(g, t) * baseMVA).^<span class="number">2</span> + gencost(g, COST + <span class="number">1</span>) * Pg(g, t) * baseMVA + u(g, t) * gencost(g, COST + <span class="number">2</span>)) + u(g, t) * (<span class="number">1</span> - u(g, t - <span class="number">1</span>)) * suc(<span class="number">1</span>) * <span class="number">0.01</span>;</span><br><span class="line">        <span class="keyword">else</span>     <span class="comment">% gencost(g, COST) * (Pg(g, t) * baseMVA).^2 +  </span></span><br><span class="line">            initu = <span class="built_in">min</span>(<span class="number">1</span>, getfield(unitdata.Generators, [<span class="string">'g'</span>, num2str(g)], strinitP));</span><br><span class="line">            obj = obj + (gencost(g, COST) * (Pg(g, t) * baseMVA).^<span class="number">2</span> + gencost(g, COST + <span class="number">1</span>) * Pg(g, t) * baseMVA + u(g, t) * gencost(g, COST + <span class="number">2</span>)) + u(g, t) * (<span class="number">1</span> - initu) * suc(<span class="number">1</span>) * <span class="number">0.01</span>;</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% 模型求解</span></span><br><span class="line"><span class="comment">%%求解</span></span><br><span class="line">tic</span><br><span class="line"><span class="comment">% ops = sdpsettings('solver', 'gurobi+', 'usex0', 1, 'debug', 1, 'gurobi.ResultFile', 'MyFile.lp');</span></span><br><span class="line">ops = sdpsettings(<span class="string">'solver'</span>, <span class="string">'gurobi+'</span>, <span class="string">'usex0'</span>, <span class="number">1</span>, <span class="string">'verbose'</span>, <span class="number">0</span>); <span class="comment">% </span></span><br><span class="line">ops.gurobi.MIPGap = <span class="number">1e-6</span>;</span><br><span class="line">ops.gurobi.TuneTimeLimit = <span class="number">0</span>;</span><br><span class="line"><span class="comment">% ops.gurobi.presolve = 0;</span></span><br><span class="line">result = optimize(constraints, obj, ops);</span><br><span class="line"><span class="comment">% [model, recoverymodel] = export(constraints, obj, ops);</span></span><br><span class="line"><span class="comment">% IIS = gurobi_iis(model);</span></span><br><span class="line"><span class="comment">% find(IIS.Arows == 1);</span></span><br><span class="line"><span class="comment">% gurobi_write(model, 'TestModel.lp');</span></span><br><span class="line"><span class="comment">% disp(result.info);</span></span><br><span class="line">toc</span><br><span class="line"><span class="comment">% 保存的量</span></span><br><span class="line"><span class="comment">% 输入: Pd, Qd</span></span><br><span class="line"><span class="comment">% 输出: obj, u, Pg, Vm, Va, Qr, runtime</span></span><br><span class="line">runtime = toc;</span><br><span class="line">data.runtime = runtime;</span><br><span class="line">data.Pd = value(Pd_saved);</span><br><span class="line">data.Qd = value(Qd_saved);</span><br><span class="line">data.Pg = value(Pg);</span><br><span class="line">data.Qr = value(Qr);</span><br><span class="line">data.result = result;</span><br><span class="line">data.Vm = value(V);</span><br><span class="line">data.Va = value(theta);</span><br><span class="line">data.u = value(u);</span><br><span class="line">data.obj = value(obj);</span><br><span class="line">data.Ybus = Ybus;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="导纳矩阵"><a href="#导纳矩阵" class="headerlink" title="导纳矩阵"></a>导纳矩阵</h1><figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="params">[Ybus, Ybus1, Yf, Yt]</span> = <span class="title">makeYbus1</span><span class="params">(baseMVA, bus, branch)</span></span></span><br><span class="line"><span class="comment">%MAKEYBUS   Builds the bus admittance matrix and branch admittance matrices.</span></span><br><span class="line"><span class="comment">%   [YBUS, YF, YT] = MAKEYBUS(MPC)</span></span><br><span class="line"><span class="comment">%   [YBUS, YF, YT] = MAKEYBUS(BASEMVA, BUS, BRANCH)</span></span><br><span class="line"><span class="comment">%   </span></span><br><span class="line"><span class="comment">%   Returns the full bus admittance matrix (i.e. for all buses) and the</span></span><br><span class="line"><span class="comment">%   matrices YF and YT which, when multiplied by a complex voltage vector,</span></span><br><span class="line"><span class="comment">%   yield the vector currents injected into each line from the "from" and</span></span><br><span class="line"><span class="comment">%   "to" buses respectively of each line. Does appropriate conversions to p.u.</span></span><br><span class="line"><span class="comment">%   Inputs can be a MATPOWER case struct or individual BASEMVA, BUS and</span></span><br><span class="line"><span class="comment">%   BRANCH values. Bus numbers must be consecutive beginning at 1</span></span><br><span class="line"><span class="comment">%   (i.e. internal ordering).</span></span><br><span class="line"><span class="comment">%</span></span><br><span class="line"><span class="comment">%   See also MAKEJAC, MAKESBUS, EXT2INT.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%   MATPOWER</span></span><br><span class="line"><span class="comment">%   Copyright (c) 1996-2016, Power Systems Engineering Research Center (PSERC)</span></span><br><span class="line"><span class="comment">%   by Ray Zimmerman, PSERC Cornell</span></span><br><span class="line"><span class="comment">%</span></span><br><span class="line"><span class="comment">%   This file is part of MATPOWER.</span></span><br><span class="line"><span class="comment">%   Covered by the 3-clause BSD License (see LICENSE file for details).</span></span><br><span class="line"><span class="comment">%   See https://matpower.org for more info.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% extract from MPC if necessary</span></span><br><span class="line"><span class="keyword">if</span> nargin &lt; <span class="number">3</span></span><br><span class="line">    mpc     = baseMVA;</span><br><span class="line">    baseMVA = mpc.baseMVA;</span><br><span class="line">    bus     = mpc.bus;</span><br><span class="line">    branch  = mpc.branch;</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% constants</span></span><br><span class="line">nb = <span class="built_in">size</span>(bus, <span class="number">1</span>);          <span class="comment">%% number of buses</span></span><br><span class="line">nl = <span class="built_in">size</span>(branch, <span class="number">1</span>);       <span class="comment">%% number of lines</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% define named indices into bus, branch matrices</span></span><br><span class="line">[PQ, PV, REF, NONE, BUS_I, BUS_TYPE, PD, QD, GS, BS, BUS_AREA, VM, ...</span><br><span class="line">    VA, BASE_KV, ZONE, VMAX, VMIN, LAM_P, LAM_Q, MU_VMAX, MU_VMIN] = idx_bus;</span><br><span class="line">[F_BUS, T_BUS, BR_R, BR_X, BR_B, RATE_A, RATE_B, RATE_C, ...</span><br><span class="line">    TAP, SHIFT, BR_STATUS, PF, QF, PT, QT, MU_SF, MU_ST, ...</span><br><span class="line">    ANGMIN, ANGMAX, MU_ANGMIN, MU_ANGMAX] = idx_brch;</span><br><span class="line"></span><br><span class="line"><span class="comment">%% check that bus numbers are equal to indices to bus (one set of bus numbers)</span></span><br><span class="line"><span class="keyword">if</span> any(bus(:, BUS_I) ~= (<span class="number">1</span>:nb)')</span><br><span class="line">    error(<span class="string">'makeYbus: buses must be numbered consecutively in bus matrix; use ext2int() to convert to internal ordering'</span>)</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% for each branch, compute the elements of the branch admittance matrix where</span></span><br><span class="line"><span class="comment">%%</span></span><br><span class="line"><span class="comment">%%      | If |   | Yff  Yft |   | Vf |</span></span><br><span class="line"><span class="comment">%%      |    | = |          | * |    |</span></span><br><span class="line"><span class="comment">%%      | It |   | Ytf  Ytt |   | Vt |</span></span><br><span class="line"><span class="comment">%%</span></span><br><span class="line">stat = branch(:, BR_STATUS);                    <span class="comment">%% ones at in-service branches</span></span><br><span class="line">Ys = stat ./ (branch(:, BR_R) + <span class="number">1</span><span class="built_in">j</span> * branch(:, BR_X));  <span class="comment">%% series admittance</span></span><br><span class="line">Bc = stat .* branch(:, BR_B);                           <span class="comment">%% line charging susceptance</span></span><br><span class="line">tap = <span class="built_in">ones</span>(nl, <span class="number">1</span>);                              <span class="comment">%% default tap ratio = 1</span></span><br><span class="line"><span class="built_in">i</span> = <span class="built_in">find</span>(branch(:, TAP));                       <span class="comment">%% indices of non-zero tap ratios</span></span><br><span class="line">tap(<span class="built_in">i</span>) = branch(<span class="built_in">i</span>, TAP);                        <span class="comment">%% assign non-zero tap ratios</span></span><br><span class="line">tap = tap .* <span class="built_in">exp</span>(<span class="number">1</span><span class="built_in">j</span>*<span class="built_in">pi</span>/<span class="number">180</span> * branch(:, SHIFT)); <span class="comment">%% add phase shifters</span></span><br><span class="line">Ytt = Ys + <span class="number">1</span><span class="built_in">j</span>*Bc/<span class="number">2</span>;</span><br><span class="line">Ytt1 =  Ys;<span class="comment">%为了线性近似</span></span><br><span class="line">Yff = Ytt ./ (tap .* <span class="built_in">conj</span>(tap));</span><br><span class="line">Yff1 = Ytt1 ./ (tap .* <span class="built_in">conj</span>(tap));</span><br><span class="line">Yft = - Ys ./ <span class="built_in">conj</span>(tap);</span><br><span class="line">Ytf = - Ys ./ tap;</span><br><span class="line"></span><br><span class="line"><span class="comment">%% compute shunt admittance</span></span><br><span class="line"><span class="comment">%% if Psh is the real power consumed by the shunt at V = 1.0 p.u.</span></span><br><span class="line"><span class="comment">%% and Qsh is the reactive power injected by the shunt at V = 1.0 p.u.</span></span><br><span class="line"><span class="comment">%% then Psh - j Qsh = V * conj(Ysh * V) = conj(Ysh) = Gs - j Bs,</span></span><br><span class="line"><span class="comment">%% i.e. Ysh = Psh + j Qsh, so ...</span></span><br><span class="line">Ysh = (bus(:, GS) + <span class="number">1</span><span class="built_in">j</span> * bus(:, BS)) / baseMVA; <span class="comment">%% vector of shunt admittances</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% bus indices</span></span><br><span class="line">f = branch(:, F_BUS);                           <span class="comment">%% list of "from" buses</span></span><br><span class="line">t = branch(:, T_BUS);                           <span class="comment">%% list of "to" buses</span></span><br><span class="line"></span><br><span class="line"><span class="comment">%% for best performance, choose method based on MATLAB vs Octave and size</span></span><br><span class="line"><span class="keyword">if</span> nb &lt; <span class="number">300</span> || have_feature(<span class="string">'octave'</span>)   <span class="comment">%% small case OR running on Octave</span></span><br><span class="line">    <span class="comment">%% build Yf and Yt such that Yf * V is the vector of complex branch currents injected</span></span><br><span class="line">    <span class="comment">%% at each branch's "from" bus, and Yt is the same for the "to" bus end</span></span><br><span class="line">    <span class="built_in">i</span> = [<span class="number">1</span>:nl <span class="number">1</span>:nl]';                           <span class="comment">%% double set of row indices</span></span><br><span class="line">    Yf = sparse(<span class="built_in">i</span>, [f; t], [Yff; Yft], nl, nb);</span><br><span class="line">    Yt = sparse(<span class="built_in">i</span>, [f; t], [Ytf; Ytt], nl, nb);</span><br><span class="line">    Yf1 = sparse(<span class="built_in">i</span>, [f; t], [Yff1; Yft], nl, nb);</span><br><span class="line">    Yt1 = sparse(<span class="built_in">i</span>, [f; t], [Ytf; Ytt1], nl, nb);</span><br><span class="line"></span><br><span class="line">    <span class="comment">%% build Ybus</span></span><br><span class="line">    Ybus = sparse([f;f;t;t], [f;t;f;t], [Yff;Yft;Ytf;Ytt], nb, nb) + ... <span class="comment">%% branch admittances</span></span><br><span class="line">            sparse(<span class="number">1</span>:nb, <span class="number">1</span>:nb, Ysh, nb, nb);        <span class="comment">%% shunt admittance</span></span><br><span class="line">    Ybus1 = sparse([f;f;t;t], [f;t;f;t], [Yff1;Yft;Ytf;Ytt1], nb, nb);</span><br><span class="line"><span class="keyword">else</span>                                <span class="comment">%% large case running on MATLAB</span></span><br><span class="line">    <span class="comment">%% build connection matrices</span></span><br><span class="line">    Cf = sparse(<span class="number">1</span>:nl, f, <span class="built_in">ones</span>(nl, <span class="number">1</span>), nl, nb);      <span class="comment">%% connection matrix for line &amp; from buses</span></span><br><span class="line">    Ct = sparse(<span class="number">1</span>:nl, t, <span class="built_in">ones</span>(nl, <span class="number">1</span>), nl, nb);      <span class="comment">%% connection matrix for line &amp; to buses</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">%% build Yf and Yt such that Yf * V is the vector of complex branch currents injected</span></span><br><span class="line">    <span class="comment">%% at each branch's "from" bus, and Yt is the same for the "to" bus end</span></span><br><span class="line">    Yf = sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Yff, nl, nl) * Cf + sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Yft, nl, nl) * Ct;</span><br><span class="line">    Yt = sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Ytf, nl, nl) * Cf + sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Ytt, nl, nl) * Ct;</span><br><span class="line">    Yf1 = sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Yff1, nl, nl) * Cf + sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Yft, nl, nl) * Ct;</span><br><span class="line">    Yt1 = sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Ytf, nl, nl) * Cf + sparse(<span class="number">1</span>:nl, <span class="number">1</span>:nl, Ytt1, nl, nl) * Ct;</span><br><span class="line"></span><br><span class="line">    <span class="comment">%% build Ybus</span></span><br><span class="line">    Ybus = Cf' * Yf + Ct' * Yt + ...            <span class="comment">%% branch admittances</span></span><br><span class="line">            sparse(<span class="number">1</span>:nb, <span class="number">1</span>:nb, Ysh, nb, nb);    <span class="comment">%% shunt admittance</span></span><br><span class="line">    Ybus1 = Cf' * Yf1 + Ct' * Yt1;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>==相关数据可从MATPOWER及UnitCommitment.jl中获取==。</p>
+<ul>
+<li><p>MATPOWER：<a target="_blank" rel="noopener" href="https://matpower.org/">MATPOWER – Free, open-source tools for electric power system simulation and optimization</a></p>
+</li>
+<li><p>UnitCommitment.jl：<a target="_blank" rel="noopener" href="https://axavier.org/UnitCommitment.jl/0.3/instances/">instances (axavier.org)</a></p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+    
+      <div>
+       <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:24px;">-------------本文结束，感谢您的阅读！-------------</div>
+    
+</div>
+      </div>
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>wzl
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://ranranlonglong.cn/2024/04/08/%E6%AF%95%E4%B8%9A%E8%AE%BA%E6%96%87/%E7%BA%BF%E6%80%A7%E5%8C%96%E6%BD%AE%E6%B5%81%E5%AE%89%E5%85%A8%E7%BA%A6%E6%9D%9F%E6%9C%BA%E7%BB%84%E7%BB%84%E5%90%88%E6%A0%B7%E6%9C%AC%E7%94%9F%E6%88%90/" title="解耦线性化最优潮流的安全约束机组组合样本生成">http://ranranlonglong.cn/2024/04/08/毕业论文/线性化潮流安全约束机组组合样本生成/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/wechat_channel.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linear/" rel="tag"># Linear</a>
+              <a href="/tags/SCUC/" rel="tag"># SCUC</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/03/19/%E6%B2%BB%E6%84%88%E6%88%91%E7%84%A6%E8%99%91%E7%9A%84%E4%B8%80%E6%AE%B5%E8%AF%9D%EF%BD%9C%E3%80%8C%E8%83%BD%E6%B2%BB%E6%84%88%E4%BD%A0%E7%9A%84%E8%AF%9D%E7%B3%BB%E5%88%97%E3%80%8D/" rel="prev" title=""治愈我焦虑的一段话"｜「能治愈你的话系列」">
+      <i class="fa fa-chevron-left"></i> "治愈我焦虑的一段话"｜「能治愈你的话系列」
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC81OTUzOC8zNjAwMA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%BB%E5%87%BD%E6%95%B0"><span class="nav-number">1.</span> <span class="nav-text">主函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B1%82%E8%A7%A3SCUC"><span class="nav-number">2.</span> <span class="nav-text">求解SCUC</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AF%BC%E7%BA%B3%E7%9F%A9%E9%98%B5"><span class="nav-number">3.</span> <span class="nav-text">导纳矩阵</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wzl"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">wzl</p>
+  <div class="site-description" itemprop="description">人生于天地之间，无终始者，非君子也。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/guyumengyue" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;guyumengyue" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      链接网站
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://baidu.com/" title="https:&#x2F;&#x2F;baidu.com" rel="noopener" target="_blank">百度</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.bing.com/?cc=us" title="https:&#x2F;&#x2F;www.bing.com&#x2F;?cc&#x3D;us" rel="noopener" target="_blank">Bing</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wzl</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">171k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">2:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客数<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+<!-- 不蒜子计数初始值纠正 -->
+<script>
+$(document).ready(function() {
+
+    var int = setInterval(fixCount, 50);  // 50ms周期检测函数
+    var countOffset = 20000;  // 初始化首次数据
+
+    function fixCount() {            
+       if (document.getElementById("busuanzi_container_site_pv").style.display != "none")
+        {
+            $("#busuanzi_value_site_pv").html(parseInt($("#busuanzi_value_site_pv").html()) + countOffset); 
+            clearInterval(int);
+        }                  
+        if ($("#busuanzi_container_site_pv").css("display") != "none")
+        {
+            $("#busuanzi_value_site_uv").html(parseInt($("#busuanzi_value_site_uv").html()) + countOffset); // 加上初始数据 
+            clearInterval(int); // 停止检测
+        }  
+    }
+       	
+});
+</script> 
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
